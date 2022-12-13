@@ -1,15 +1,137 @@
-﻿
-Console.WriteLine("hello dude");  
+﻿using CloudWeather.DataLoader.Models;
+using Microsoft.Extensions.Configuration;
+using System.Net.Http.Json;
 
+IConfiguration config = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json")
+    .AddEnvironmentVariables()
+    .Build();
 
+var servicesConfig = config.GetSection("Services");
 
+var tempServiceConfig = servicesConfig.GetSection("Temperature");
+var tempServiceHost = tempServiceConfig["Host"];
+var tempServicePort = tempServiceConfig["Port"];
 
+var precipServiceConfig = servicesConfig.GetSection("Precipitation");
+var precipServiceHost = precipServiceConfig["Host"];
+var precipServicePort = precipServiceConfig["Port"];
 
+var zipCodes = new List<string>
+{
+    "73026",
+    "68101",
+    "04401",
+    "32808",
+    "19717"
+};
 
+Console.WriteLine("Starting Data Load");
 
+var temperatureHttpClient = new HttpClient();
+temperatureHttpClient.BaseAddress = new Uri($"http://{tempServiceHost}:{tempServicePort}");
 
+var precipitationHttpClient = new HttpClient();
+precipitationHttpClient.BaseAddress = new Uri($"http://{precipServiceHost}:{precipServicePort}");
 
+foreach (var zip in zipCodes)
+{
+    Console.WriteLine($"Processing Zip Code: {zip}");
+    var from = DateTime.Now.AddYears(-2);
+    var thru = DateTime.Now;
 
+    for (var day = from.Date; day.Date <= thru.Date; day = day.AddDays(1))
+    {
+        var temps = PostTemp(zip, day, temperatureHttpClient);
+        PostPrecip(temps[0], zip, day, precipitationHttpClient);
+    }
+}
 
+void PostPrecip(int lowTemp, string zip, DateTime day, HttpClient precipitationHttpClient)
+{
+    var rand = new Random();
+    var isPrecip = rand.Next(2) < 1;
+    PrecipitationModel precipitationModel;
+    if (isPrecip)
+    {
+        var precipInches = rand.Next(1, 16);
+        if (lowTemp < 32)
+        {
+            precipitationModel = new PrecipitationModel
+            {
+                AmountInches = precipInches,
+                WeatherType = "snow",
+                ZipCode = zip,
+                CreateOn = day
+            };
+        }
+        else
+        {
+            precipitationModel = new PrecipitationModel
+            {
+                AmountInches = precipInches,
+                WeatherType = "rain",
+                ZipCode = zip,
+                CreateOn = day
+            };
+        }
+    }
+    else
+    {
+        precipitationModel = new PrecipitationModel
+        {
+            AmountInches = 0,
+            WeatherType = "none",
+            ZipCode = zip,
+            CreateOn = day
+        };
+    }
 
+    var precipResponse = precipitationHttpClient
+        .PostAsJsonAsync("observation", precipitationModel)
+        .Result;
 
+    if (precipResponse.IsSuccessStatusCode)
+    {
+        Console.Write($"Posted Precipitation: Date {day:d} " +
+                      $"Zip: {zip} " +
+                      $"Type: {precipitationModel.WeatherType}" +
+                      $"Amount (in.): {precipitationModel.AmountInches}");
+    }
+
+}
+
+List<int> PostTemp(string zip, DateTime day, HttpClient temperatureHttpClient)
+{
+    var rand = new Random();
+    var t1 = rand.Next(0, 100);
+    var t2 = rand.Next(0, 100);
+    var hiloTemps = new List<int> { t1, t2 };
+    hiloTemps.Sort();
+
+    var temperatureObservation = new TemperatureModel
+    {
+        TempLowF = hiloTemps[0],
+        TempHighF = hiloTemps[1],
+        ZipCode = zip,
+        CreatedOn = day
+    };
+
+    var tempResponse = temperatureHttpClient
+        .PostAsJsonAsync("observation", temperatureObservation)
+        .Result;
+
+    if (tempResponse.IsSuccessStatusCode)
+    {
+        Console.Write($"Posted Temperature: Date: {day:d} " +
+            $"Zip: {zip}" +
+            $"Lo (F): {hiloTemps[0]}" +
+            $"Hi (F): {hiloTemps[1]}");
+    }
+    else
+    {
+        Console.WriteLine(tempResponse.ToString());
+    }
+
+    return hiloTemps;
+}
