@@ -1,4 +1,5 @@
 using CloudWeather.Precipitation.DataAccess;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,13 @@ app.MapGet("/observation/{zip}",async  (string zip, [FromQuery] int? days, Preci
         .ToListAsync();
 
     return Results.Ok(results);
+});
+
+app.MapPost("/observation", async (Precipitation precipitation, PrecipDbContext context) =>
+{
+    precipitation.CreatedOn = precipitation.CreatedOn.ToUniversalTime();
+    await context.AddAsync(precipitation);
+    await context.SaveChangesAsync();
 });
 
 app.Run();
