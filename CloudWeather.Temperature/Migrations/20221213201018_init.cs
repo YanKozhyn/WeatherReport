@@ -15,7 +15,7 @@ namespace CloudWeather.Temperature.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    TempHigh = table.Column<decimal>(type: "numeric", nullable: false),
+                    TempHighF = table.Column<decimal>(type: "numeric", nullable: false),
                     TempLowF = table.Column<decimal>(type: "numeric", nullable: false),
                     ZipCode = table.Column<string>(type: "text", nullable: false)
                 },

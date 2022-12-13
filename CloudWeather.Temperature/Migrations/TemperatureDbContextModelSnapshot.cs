@@ -31,7 +31,7 @@ namespace CloudWeather.Temperature.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<decimal>("TempHigh")
+                    b.Property<decimal>("TempHighF")
                         .HasColumnType("numeric");
 
                     b.Property<decimal>("TempLowF")

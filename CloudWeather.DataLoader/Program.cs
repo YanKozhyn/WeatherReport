@@ -62,7 +62,7 @@ void PostPrecip(int lowTemp, string zip, DateTime day, HttpClient precipitationH
                 AmountInches = precipInches,
                 WeatherType = "snow",
                 ZipCode = zip,
-                CreateOn = day
+                CreatedOn = day
             };
         }
         else
@@ -72,7 +72,7 @@ void PostPrecip(int lowTemp, string zip, DateTime day, HttpClient precipitationH
                 AmountInches = precipInches,
                 WeatherType = "rain",
                 ZipCode = zip,
-                CreateOn = day
+                CreatedOn = day
             };
         }
     }
@@ -83,7 +83,7 @@ void PostPrecip(int lowTemp, string zip, DateTime day, HttpClient precipitationH
             AmountInches = 0,
             WeatherType = "none",
             ZipCode = zip,
-            CreateOn = day
+            CreatedOn = day
         };
     }
 
@@ -93,15 +93,15 @@ void PostPrecip(int lowTemp, string zip, DateTime day, HttpClient precipitationH
 
     if (precipResponse.IsSuccessStatusCode)
     {
-        Console.Write($"Posted Precipitation: Date {day:d} " +
-                      $"Zip: {zip} " +
-                      $"Type: {precipitationModel.WeatherType}" +
-                      $"Amount (in.): {precipitationModel.AmountInches}");
+        Console.Write($" Posted Precipitation: Date {day:d}, " +
+                      $" Zip: {zip}, " +
+                      $" Type: {precipitationModel.WeatherType}, " +
+                      $" Amount (in.): {precipitationModel.AmountInches}; ");
     }
 
 }
 
-List<int> PostTemp(string zip, DateTime day, HttpClient temperatureHttpClient)
+List<int> PostTemp(string zip, DateTime day, HttpClient httpClient)
 {
     var rand = new Random();
     var t1 = rand.Next(0, 100);
@@ -117,16 +117,16 @@ List<int> PostTemp(string zip, DateTime day, HttpClient temperatureHttpClient)
         CreatedOn = day
     };
 
-    var tempResponse = temperatureHttpClient
+    var tempResponse = httpClient
         .PostAsJsonAsync("observation", temperatureObservation)
         .Result;
 
     if (tempResponse.IsSuccessStatusCode)
     {
-        Console.Write($"Posted Temperature: Date: {day:d} " +
-            $"Zip: {zip}" +
-            $"Lo (F): {hiloTemps[0]}" +
-            $"Hi (F): {hiloTemps[1]}");
+        Console.Write($" Posted Temperature: Date: {day:d}, " +
+            $" Zip: {zip}, " +
+            $" Lo (F): {hiloTemps[0]}, " +
+            $" Hi (F): {hiloTemps[1]}; ");
     }
     else
     {
